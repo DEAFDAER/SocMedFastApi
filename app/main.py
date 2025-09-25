@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Response
+from fastapi.responses import RedirectResponse
 from app.config import config  # <-- make sure this is imported first
 from neomodel import db
 from neo4j.exceptions import AuthError, ServiceUnavailable
@@ -20,6 +21,23 @@ def read_root():
     return {"message": "FastAPI + Neo4j backend is running"}
 
 
+@app.get("/health")
+def health_check():
+    """Simple health check used by Render or other platform health probes.
+
+    Returns 200 OK if the application can reach Neo4j (best-effort). If the DB
+    cannot be reached this will still return 503 so orchestrators can detect
+    an unhealthy instance.
+    """
+    try:
+        db.cypher_query("RETURN 1")
+        return {"status": "ok"}
+    except Exception:
+        from fastapi import HTTPException
+
+        raise HTTPException(status_code=503, detail="db-unreachable")
+
+
 @app.get("/favicon.ico")
 def favicon():
     # Return a minimal SVG favicon to avoid browser 404 noise during development
@@ -31,6 +49,12 @@ def favicon():
         '</svg>'
     )
     return Response(content=svg, media_type="image/svg+xml")
+
+
+@app.get("/dash")
+def dash_redirect():
+    """Redirect legacy /dash requests to the static frontend mount at /frontend/"""
+    return RedirectResponse(url="/frontend/")
 
 @app.on_event("startup")
 def startup_db_check():
