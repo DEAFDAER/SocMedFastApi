@@ -8,3 +8,5 @@ class PersonResponse(BaseModel):
     element_id_property: str 
     name: str
     age: int
+    bio: str | None = None
+    created_at: str | None = None

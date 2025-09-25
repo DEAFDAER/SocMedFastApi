@@ -6,16 +6,16 @@ def create_person(data: PersonCreate):
     if Person.nodes.get_or_none(name=data.name):
         raise HTTPException(status_code=400, detail="Person already exists")
     new_person = Person(name=data.name, age=data.age).save()
-    return new_person
+    return new_person.to_dict()
 
 def get_person(name: str):
     person = Person.nodes.get_or_none(name=name)
     if not person:
         raise HTTPException(status_code=404, detail="Person not found")
-    return person
+    return person.to_dict()
 
 def list_persons():
-    return Person.nodes.all()
+    return [p.to_dict() for p in Person.nodes.all()]
 
 def update_person(name: str, data: PersonCreate):
     person = Person.nodes.get_or_none(name=name)
@@ -23,7 +23,7 @@ def update_person(name: str, data: PersonCreate):
         raise HTTPException(status_code=404, detail="Person not found")
     person.age = data.age
     person.save()
-    return person
+    return person.to_dict()
 
 def delete_person(name: str):
     person = Person.nodes.get_or_none(name=name)
